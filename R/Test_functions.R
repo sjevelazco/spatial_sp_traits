@@ -336,11 +336,43 @@ require(parallel)
 detectCores()
 
 
+
+
+##%######################################################%##
+#                                                          #
+####               Create a new database                ####
+#                                                          #
+##%######################################################%##
+data("spp_real")
+env.stack <- raster::brick('C:/Users/santi/OneDrive/Documentos/FORESTAL/1-Trabajos/83-NSF_spatial_and_species_traits/3-Variables/Predictors/BCM1981_2010_CA_CFP.grd')
+
+abies_db <- spp_real[seq(1,nrow(spp_real), by=10),] 
+
+abies_db <- tibble(abies_db, data.frame(raster::extract(env.stack, abies_db[,2:3])))
+abies_db$landform <- as.factor(abies_db$landform)
+abies_db <- abies_db %>% dplyr::select(-c(1,2:3, 5:10))
+
+
+# Absences
+na <- abies_db %>% dplyr::filter(pr_ab == 0) %>% nrow
+# Presences
+np <- abies_db %>% dplyr::filter(pr_ab == 1) %>% nrow
+
+N <- 10
+na <- sample(rep(1:N, length.out=na))
+np <- sample(rep(1:N, length.out=np))
+abies_db <- abies_db %>% dplyr::mutate(partition=c(na, np)) %>% dplyr::relocate(pr_ab, partition)
+colnames(abies_db)
+
+# readr::write_tsv(abies_db, "./Data/abies_db.txt")
+
+
 ##%######################################################%##
 #                                                          #
 ####              Test  evaluate function               ####
 #                                                          #
 ##%######################################################%##
+require(flexsdm)
 require(dismo)
 require(dplyr)
 source("./R/boyce.R")
